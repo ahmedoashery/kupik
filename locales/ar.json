@@ -1,0 +1,27 @@
+{
+  "messages": [],
+  "layouts": {
+    "title": "صفحة - {title}"
+  },
+  "pages": {
+    "title": {
+      "top": "اعلى",
+      "about": "معلومات عنا"
+    }
+  },
+  "snakeCaseText": "@.snakeCase:{'pages.title.about'}",
+  "pascalCaseText": "@.pascalCase:{'pages.title.about'}",
+  "welcome": "مرحباً",
+  "hello": "اهلاً {name} !",
+  "items": [
+    {
+      "name": "apple"
+    },
+    {
+      "name": "banana"
+    },
+    {
+      "name": "strawberry"
+    }
+  ]
+}
