@@ -1,27 +1,32 @@
 import { db } from '~/prisma/db'
-import { InvoiceSchema, InvoiceLineSchema } from '~/schemas'
+import { InvoiceSchema, InvoicePaymentSchema, InvoiceLineSchema } from '~/schemas'
 
 export default eventHandler(async (event) => {
-  // const data:any = await readValidatedBody(event, (body) => InvoiceSchema.parse(body))
-  const data = await readBody(event)
+  const valid = await readValidatedBody(event, (body) => InvoiceSchema.safeParse(body))
+
+  if(!valid.success){
+    console.log(JSON.stringify(valid.error.issues))
+    throw createError({
+      data: valid.error.issues
+    })
+  }
 
   const invoice = await db.invoice.create({
     data: {
-      date: data.date,
-      accountId: data.accountId,
-      nameId: data.nameId,
-      payments: data.payments,
-      type: data.type,
-      userId: data.userId,
-      num: data.num,
+      num: Number(valid.data.num),
+      type: valid.data.type,
+      date: valid.data.date,
+      entityId: valid.data.entityId,
+      accountId: valid.data.accountId,
+      payments: valid.data.payments,
+      userId: valid.data.userId,
       invoiceLines: {
         createMany: {
-          data: data.invoiceLines
+          data: valid.data.invoiceLines
         }
       }
     }
   })
-  console.log(invoice)
 
   return invoice
 })
