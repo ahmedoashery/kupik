@@ -1,17 +1,14 @@
-import { db } from "~/prisma/db";
+import { db } from '~/prisma/db'
 
-export default eventHandler(async (event) => {
-    const maxInvoiceNum = await db.invoice.aggregate({
-        _max: {
-            num: true
-        }
-    }).catch((error) => {
-        console.error(error)
-        throw createError({
-            message: 'wrong invoice num'
-        })
+export default eventHandler(async () => {
+  const maxInvoiceId = await db.invoice.aggregate({
+    _max: { id: true }
+  }).catch((error) => {
+    console.error(error)
+    throw createError({
+      message: 'wrong invoice num'
     })
-    
-    // return new num = max + 1
-    return (maxInvoiceNum._max.num || 0) + 1
+  })
+  const max = maxInvoiceId._max.id
+  return (max! + 1) || 1
 })

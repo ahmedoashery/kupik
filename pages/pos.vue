@@ -1,15 +1,65 @@
 <template>
   <UDashboardPage>
     <UDashboardPanel grow>
-      <UDashboardNavbar title="الفرع: " class="bg-gray-50 dark:bg-gray-700" />
+      <UDashboardNavbar title="نقطة بيع - POS" class="bg-gray-50 dark:bg-gray-700">
+        <template #right>
+          <UButtonGroup size="md" class="gap-2 py-2 justify-center cursor-pointer">
+            <UButton
+              label="جديد"
+              color="white"
+              variant="solid"
+              icon="i-heroicons-square-2-stack-16-solid"
+              @click="initNewInvoice"
+            />
+            <UButton
+              label="حفظ"
+              color="white"
+              variant="solid"
+              icon="i-heroicons-square-2-stack-16-solid"
+              :disabled="total <= 0 || !selectedCustomer"
+              @click="save"
+            />
+            <UButton
+              label="طباعة"
+              color="white"
+              variant="solid"
+              icon="i-heroicons-printer-solid"
+              :disabled="total <= 0 || !selectedCustomer"
+            />
+            <UButton label="الغاء" color="white" variant="solid" icon="i-heroicons-receipt-refund-solid" @click="cancel" />
+          </UButtonGroup>
+          <UPagination
+            v-model="page"
+            :page-count="1"
+            :total="invoices?.length!"
+            show-first
+            show-last
+            :prev-button="{ icon: 'i-heroicons-arrow-small-left-20-solid', label: '', color: 'gray' }"
+            :next-button="{ icon: 'i-heroicons-arrow-small-right-20-solid', trailing: true, label: '', color: 'gray' }"
+            :ui="{
+              default: {
+                size: 'sm',
+                activeButton: {
+                  class: 'hidden',
+                  color: 'primary',
+                },
+                inactiveButton: {
+                  class: 'hidden',
+                  color: 'white',
+                }
+              }
+            }"
+          />
+        </template>
+      </UDashboardNavbar>
 
       <UDashboardToolbar class="bg-white dark:bg-gray-600">
         <template #left>
-          <div>
+          <div class="flex justify-between">
             <!-- customer -->
             <UFormGroup label="العميل:">
               <UInputMenu
-                ref="customersList"
+                ref="customersDropdown"
                 v-model="selectedCustomer"
                 v-model:query="searchCustomerQuery"
                 :search="searchCustomer"
@@ -29,6 +79,11 @@
                 </template>
               </UInputMenu>
             </UFormGroup>
+
+            <!-- invoice num -->
+            <ClientOnly>
+              <span v-if="invoiceNum" class="align-middle my-3 ms-20">#{{ invoiceNum }}</span>
+            </ClientOnly>
           </div>
         </template>
         <template #right>
@@ -47,7 +102,7 @@
         <!-- <div class="grid justify-between h-full w-full p-3"> -->
         <UTable
           ref="itemsTable"
-          :rows="invoiceItems"
+          :rows="invoice?.invoiceLines!"
           :columns="invoiceItemsColumns"
           class="bg-white w-full dark:bg-gray-900 h-96"
         >
@@ -95,7 +150,7 @@
               v-model.number="row.price"
               type="number"
               variant="none"
-              min="1"
+              :min="1"
               @change="row.price === 0 ? (row.price = 1) : row.price"
             />
           </template>
@@ -127,7 +182,7 @@
           <div>
             <div>عدد الاصناف = {{ count }}</div>
             <div>
-              الاجمالى الفرعى = {{ subTotal.toLocaleString('ar-EG', {
+              الاجمالى الفرعى = {{ Number(subTotal).toLocaleString('ar-EG', {
                 style: 'currency', currency: 'EGP',
                 maximumFractionDigits: 2, useGrouping: true, compactDisplay: 'short'
               }) }}
@@ -156,7 +211,7 @@
                 min="0.0"
                 :max="subTotal"
                 color="gray"
-                :disabled="subTotal <= 0"
+                :disabled="Number(subTotal) <= 0"
                 @change="recalculate"
               />
             </UFormGroup>
@@ -193,24 +248,6 @@
           </div>
         </div>
         <UDivider class="my-2" />
-        <UButtonGroup size="md" class="gap-2 py-2 justify-center cursor-pointer">
-          <UButton
-            label="حفظ"
-            color="white"
-            variant="solid"
-            icon="i-heroicons-square-2-stack-16-solid"
-            :disabled="total <= 0 || !selectedCustomer"
-            @click="save"
-          />
-          <UButton
-            label="طباعة"
-            color="white"
-            variant="solid"
-            icon="i-heroicons-printer-solid"
-            :disabled="total <= 0 || !selectedCustomer"
-          />
-          <UButton label="الغاء" color="white" variant="solid" icon="i-heroicons-receipt-refund-solid" />
-        </UButtonGroup>
         <!-- </div> -->
         <!-- </div> -->
       </UDashboardPanelContent>
@@ -224,7 +261,7 @@
       resizable
       class="bg-gray-100 dark:bg-gray-800"
     >
-      <UDashboardNavbar title="نقطة بيع - POS">
+      <UDashboardNavbar title="تاريخ العمليات للعميل">
         <template #right>
           <!-- <UButton
             variant="outline"
@@ -246,30 +283,57 @@
 
 <script setup lang="ts">
 import { isEmpty } from '@unovis/ts'
+import type { Invoice, InvoiceLine } from '~/types'
 
+const { data: invoices, refresh: refreshInvoices } = await useFetch<Invoice[]>('/api/transactions/invoices')
+const invoice = ref<Invoice>()
+const page = ref(1)
 
+const { data: maxNum, refresh: refreshInvoiceNum } = await useFetch('/api/transactions/maxInvoiceNum') // init new invoice num
+const invoiceNum = ref()
 const invoiceDate = ref(new Date())
-const { data: user } = useAuth()
+const { data: loggedInUser } = useAuth()
+const user = ref(loggedInUser.value)
 
 const itemsList = ref()
 const itemsTable = ref()
 const isItemsPanelOpen = ref(false)
 
+const customersDropdown = ref()
 const customers = ref()
 const selectedCustomer = ref()
 const searchCustomerQuery = ref('')
-const selectedCategories = ref([])
-interface InvoiceItem {
-  no: number | undefined;
-  item: { id: number | undefined, name: string | undefined };
-  quantity: number;
-  price: number;
-  amount: number;
-  accountId: number | null
-}
-const invoiceItems = ref<InvoiceItem[]>([])
-Array.from({ length: 50 }).map(() => invoiceItems.value.push({} as InvoiceItem))
 
+const invoiceItems = ref<InvoiceLine[]>(Array.from({ length: 50 }).map(() => ({} as any)))
+
+// watch for pagination
+watch(page, (newPage) => {
+  invoice.value = invoices?.value![newPage - 1]
+  selectedCustomer.value = invoice.value ? invoice.value?.entity : selectedCustomer.value
+  user.value = invoice.value ? invoice.value?.user : loggedInUser.value
+  invoiceNum.value = invoice.value ? invoice.value?.num! : maxNum.value
+  invoiceItems.value = invoice.value ? invoice.value.invoiceLines : invoiceItems.value
+})
+
+const initNewInvoice = async () => {
+  invoiceNum.value = maxNum.value
+  selectedCustomer.value = undefined
+  invoiceItems.value = Array.from({ length: 50 }).map(() => ({} as InvoiceLine))
+  const inputId = customersDropdown.value.inputId
+  document.getElementById(inputId)?.focus()
+
+  invoice.value = {
+    id: undefined,
+    num: maxNum.value,
+    type: 'invoice',
+    date: invoiceDate.value,
+    payments: [],
+    invoiceLines: invoiceItems.value,
+    entity: selectedCustomer.value,
+    user: user.value,
+    account: undefined,
+  } as unknown as Invoice
+}
 
 const invoiceItemsColumns = ref([
   { key: 'no', label: '#' },
@@ -280,72 +344,21 @@ const invoiceItemsColumns = ref([
   { key: 'actions', label: '...', class: 'text-center w-22' },
 ])
 
-const count = computed(() => invoiceItems.value.reduce((n: number, item: { quantity: number }) => n + (item.quantity || 0), 0))
 
-const countItemQuantity = (id: number) => {
-  const item = invoiceItems.value.find((i) => i.item.id == id)
-  return item?.quantity! || undefined
-}
-
-// calculating
-const subTotal = computed<number>(() => invoiceItems.value.reduce((n: number, item: { quantity: number; price: number }) => n + ((item.quantity || 0) * (item.price || 0)), 0))
-const itemDiscount = ref<number>(0)
+// calculate
+const count = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + (Number(line.quantity) || 0), 0))
+const subTotal = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0)), 0))
 const totalDiscount = ref<number>(0)
-const totalDiscountPercentage = computed(() => (((totalDiscount.value) / (subTotal.value)) * 100))
-const total = computed(() => ((subTotal.value || 0) - (totalDiscount.value || 0)))
-const amountPaid = ref(0)
-const amountDue = computed(() => amountPaid.value >= 0 ? ((total.value || 0) - (amountPaid.value || 0)) : 0)
+const totalDiscountPercentage = computed<number>(() => (((totalDiscount.value) / Number(subTotal.value)) * 100))
+const total = computed<number>(() => ((subTotal.value || 0) - (totalDiscount.value || 0)))
+const amountPaid = ref<number>(0)
+const amountDue = computed<number>(() => amountPaid.value >= 0 ? ((total.value || 0) - (amountPaid.value || 0)) : 0)
 
-const showCategoryImage = ref(true)
-
-// categories
-const { data: categories } = await useLazyFetch<any>('/api/items/categories')
-
-// add invoiceLines
-const addItem = (data: any) => {
-  const index = invoiceItems.value.findIndex((item: any) => item.id == data.id)
-  const item = invoiceItems.value[index]
-
-  if (index !== -1) {
-    item.quantity += 1
-    item.amount = item.price * item.quantity
-  } else {
-    invoiceItems.value.push({
-      no: undefined,
-      item: { id: data.id, name: data.name },
-      quantity: 1,
-      price: parseInt(data.price),
-      amount: parseInt(data.price),
-      accountId: null,
-    })
-  }
-}
-
-const decreaseQuantity = (data: any) => {
-  const index = invoiceItems.value.findIndex((item: any) => item.id == data.id)
-  if (index !== -1) {
-    if (invoiceItems.value[index].quantity === 0) return
-    invoiceItems.value[index].quantity -= 1
-    invoiceItems.value[index].amount =
-      invoiceItems.value[index].price * invoiceItems.value[index].quantity
-  }
-}
 const removeItem = (index: number, length?: number) => {
   if (index !== -1) {
     invoiceItems.value.splice(index, length || 1)
   }
 }
-
-// const selectCategories = (category: any) => {
-//   if (category) {
-//     const index = selectedCategories.value.findIndex((c: any) => c.id == category.id)
-//     if (index === -1) {
-//       selectedCategories.value.push(category)
-//     } else {
-//       selectedCategories.value.splice(index, 1)
-//     }
-//   }
-// }
 
 // search customers
 const loadingCustomers = ref(false)
@@ -375,7 +388,7 @@ const updateInvoiceItemsLines = (row: any, index: number) => {
   const exists = invoiceItems.value.findIndex(i => i.item?.id! == row?.item?.id!)
   const line = invoiceItems.value[exists]
   if (exists !== index) {
-    line.quantity += 1
+    line.quantity! += 1
     removeItem(index)
   }
   else {
@@ -386,13 +399,13 @@ const updateInvoiceItemsLines = (row: any, index: number) => {
   const lastIndex = invoiceItems.value.findLastIndex((item) => !isEmpty(item))
   const prevEmptyLines = invoiceItems.value.filter(i => isEmpty(i) && invoiceItems.value.indexOf(i) < lastIndex)
   removeItem(invoiceItems.value.indexOf(prevEmptyLines[0]), prevEmptyLines.length)
-  if(invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as InvoiceItem)
-)
+  if (invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as any)
+  )
 }
 
 // Recalculate
 const recalculate = () => {
-  totalDiscount.value = totalDiscount.value > subTotal.value ? subTotal.value : totalDiscount.value
+  totalDiscount.value = totalDiscount.value > Number(subTotal.value) ? Number(subTotal.value) : totalDiscount.value
   totalDiscount.value = totalDiscount.value < 0 ? 0 : totalDiscount.value
   amountPaid.value = amountPaid.value > total.value ? total.value : amountPaid.value
   amountPaid.value = amountPaid.value < 0 ? 0 : amountPaid.value
@@ -418,27 +431,57 @@ const save = async () => {
   })
 
   const data: any = {
-    num: 0,
+    id: invoice.value?.id,
+    num: invoice.value?.num,
     type: 'invoice',
-    nameId: selectedCustomer.value?.id,
+    entityId: selectedCustomer.value?.id,
     accountId: undefined,
     userId: user.value?.id,
     date: invoiceDate.value,
     payments: undefined,
     invoiceLines: invoiceLines,
   }
-  const result = await $fetch('/api/transactions/invoice', {
+
+  console.log('INVOICE: ', invoice.value, '\nDATA: ', data)
+
+  await $fetch('/api/transactions/invoice', {
     method: 'POST',
     body: data,
+
+  }).then(async (result) => {
+    if (result) {
+      toast.add({
+        id: 'pos-new-invoice',
+        description: 'تم الحفظ!',
+        color: 'green',
+      })
+    }
+  }).catch((error) => {console.error(error)})
+    .finally(async() => {
+      await refreshInvoiceNum()
+      // refresh invoices
+      await refreshInvoices()
+      // init new invoice
+      await initNewInvoice()
   })
-  if (result) {
-    toast.add({
-      id: 'pos-new-invoice',
-      description: 'تم الحفظ!',
-      color: 'green',
-    })
-  }
 }
+
+// cancel
+const cancel = async() => {
+  // refresh invoices
+  await refreshInvoices()
+  // init new invoice
+  await initNewInvoice()
+  // reset pagination
+  page.value = 1
+  // reset invoice num
+  invoiceNum.value = undefined
+}
+
+// init new invoice -- on mounted
+onMounted(async() => {
+  await initNewInvoice()
+})
 </script>
 
 <style></style>

@@ -1,9 +1,10 @@
 import type { Avatar } from '#ui/types'
+import type { BillPayment, InvoicePayment } from '@prisma/client'
 
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 
 export interface User {
-  id: number
+  id: string
   name: string
   email: string
   avatar?: Avatar
@@ -45,22 +46,22 @@ export interface Range {
 
 export interface Entity {
   id: number;
-  avatar?: string|null;
-  groupId?: number|null;
-  group?: Group|null;
-  code?: string|null;
-  accountNumber?: string|null;
-  firstname: string|null;
-  lastname?: string|null;
-  fullname?: string|null;
-  contact?: string|null;
-  phone?: string|null;
-  company?: string|null;
-  address?: string|null;
-  city?: string|null;
-  zipcode?: string|null;
-  startedAt?: DateTime|null;
-  isActive?: boolean|null;
+  avatar?: string | null;
+  groupId?: number | null;
+  group?: Group | null;
+  code?: string | null;
+  accountNumber?: string | null;
+  firstname: string | null;
+  lastname?: string | null;
+  fullname?: string | null;
+  contact?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  address?: string | null;
+  city?: string | null;
+  zipcode?: string | null;
+  startedAt?: DateTime | null;
+  isActive?: boolean | null;
 }
 
 export interface Item {
@@ -73,4 +74,62 @@ export interface Item {
   price?: number;
   isActive?: boolean;
   startedAt?: DateTime;
+}
+
+export interface Invoice {
+  id?: number;
+  num: number | null;
+  type?: string | null;
+  entityId?: number | null;
+  accountId?: number | null;
+  userId?: string | null;
+  date: string | null;
+  payments?: InvoicePayment[];
+  invoiceLines: InvoiceLine[];
+  entity: Entity;
+  user: User;
+  account: Account;
+}
+
+export interface InvoiceLine {
+  id?: number;
+  invoiceId?: number;
+  accountId?: number;
+  itemId?: number;
+  quantity?: number|undefined;
+  price?: number|undefined;
+  amount?: number;
+  invoice?: Invoice;
+  item?: Item;
+  account?: Account;
+}
+
+export interface ChartOfAccount {
+  id: number;
+  number: number;
+  name: string;
+  parentId: number;
+  openBalance: number;
+  balance: number;
+  type: string;
+  description: string;
+  parent: ChartOfAccount;
+  subAccounts: ChartOfAccount[];
+  bills: Bill[];
+  billLines: BillLine[];
+  billPayments: BillPayment[];
+  invoices: Invoice[];
+  invoiceLines: InvoiceLine[];
+  invoicePayments: InvoicePayment[];
+}
+
+export interface InvoicePayment{
+  id: number;
+  invoiceId: number|null;
+  accountId: number|null;
+  date: string|null;
+  memo: string|null;
+  amount: number;
+  invoice: Invoice|null;
+  account: ChartOfAccount|null;
 }

@@ -1,9 +1,7 @@
-import { date, number, object, string } from 'yup'
-import { z } from 'zod'
+import { z, date, number, object, string } from 'zod'
 
 export const UserSchema = object({
-  firstname: string()
-    .required('يجب ادخال الاسم الاول')
+  firstname: z.string({ required_error: 'يجب ادخال الاسم الاول' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200 !'),
 
@@ -11,13 +9,11 @@ export const UserSchema = object({
 
   name: string().optional(),
 
-  email: string()
+  email: string({ required_error: 'يجب ادخال بريد الكترونى' })
     .email('بريد الكترونى غيرصحيح!')
-    .required('يجب ادخال بريد الكترونى')
     .email('يجب ادخال بريد الكترونى صحيح'),
 
-  password: string()
-    .required('يجب ادخال كلمة المرور')
+  password: string({ required_error: 'يجب ادخال كلمة المرور' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
 
@@ -32,44 +28,43 @@ export const UserSchema = object({
 })
 
 export const AuthSchema = object({
-  username: string()
-    .required('يجب ادخال اسم المستخدم')
+  username: string({ required_error: 'يجب ادخال اسم المستخدم' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
 
-  password: string()
-    .required('يجب ادخال كلمة المرور')
+  password: string({ required_error: 'يجب ادخال كلمة المرور' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
 })
 
 
 export const InvoicePaymentSchema = object({
-  invoiceId: number(),
-  accountId: number(),
+  invoiceId: number().optional(),
+  accountId: number().optional(),
   date: date(),
   memo: string(),
   amount: number(),
 })
 
 export const InvoiceLineSchema = object({
-  invoiceId: number(),
-  accountId: number(),
-  itemId: number(),
-  quantity: number(),
-  price: number(),
-  amount: number(),
+  invoiceId:z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  accountId: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  itemId: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  quantity: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  price: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  amount: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
 })
 
 export const InvoiceSchema = object({
-  num: number().required('رقم الفاتورة مطلوب' ),
+  id: number().optional(),
+  num: number({ required_error: 'رقم الفاتورة مطلوب' }),
   type: string(),
-  nameId: number(),
-  accountId: number(),
-  userId: number(),
-  date: date(),
-  payments: InvoicePaymentSchema,
-  invoiceLines: InvoiceLineSchema
+  entityId: number({required_error: 'يجب تحديد العميل!'}),
+  accountId: number().optional(),
+  userId: string().optional(),
+  date: string(),
+  payments: z.array(InvoicePaymentSchema).optional(),
+  invoiceLines: z.array(InvoiceLineSchema).min(1, {message: 'يجب اضافة اصناف/خدمات للفاتورة!'})
 })
 
 
@@ -78,12 +73,12 @@ export const ItemSchema = z.object({
   name: z.string({ required_error: 'يجب ادخال الاسم' }).trim().min(3, { message: 'على الاقل 3 احرف' }),
   code: z.string({ invalid_type_error: 'كود غير صحيح' }),
   inventory: z.object({
-      id: z.number(),
-      name: z.string().trim()
+    id: z.number(),
+    name: z.string().trim()
   }, { required_error: 'يجب تحديد مخزن' }),
   category: z.object({
-      id: z.number(),
-      name: z.string().trim()
+    id: z.number(),
+    name: z.string().trim()
   }, { required_error: 'يجب تحديد تصنيف/مجموعة' }),
   cost: z.string().optional().nullable(),
   price: z.string().optional().nullable(),
