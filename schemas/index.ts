@@ -52,6 +52,8 @@ export const InvoiceLineSchema = object({
   itemId: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
   quantity: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
   price: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  discount: z.number().nullable(),
+  tax: z.number().nullable(),
   amount: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
 })
 
@@ -64,6 +66,8 @@ export const InvoiceSchema = object({
   userId: string().optional(),
   date: string(),
   payments: z.array(InvoicePaymentSchema).optional(),
+  discount: z.number().nullable(),
+  tax: z.number().nullable(),
   invoiceLines: z.array(InvoiceLineSchema).min(1, {message: 'يجب اضافة اصناف/خدمات للفاتورة!'})
 })
 

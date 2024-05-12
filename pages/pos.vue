@@ -340,6 +340,8 @@ const invoiceItemsColumns = ref([
   { key: 'item', label: 'الصنف' },
   { key: 'quantity', label: 'الكمية', class: 'text-center w-28' },
   { key: 'price', label: 'السعر', class: 'text-center w-28' },
+  { key: 'discount', label: 'خصم', class: 'text-center w-28' },
+  { key: 'tax', label: 'ضريبة', class: 'text-center w-28' },
   { key: 'amount', label: 'المبلغ', class: 'text-center w-32' },
   { key: 'actions', label: '...', class: 'text-center w-22' },
 ])
@@ -349,8 +351,9 @@ const invoiceItemsColumns = ref([
 const count = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + (Number(line.quantity) || 0), 0))
 const subTotal = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0)), 0))
 const totalDiscount = ref<number>(0)
+const tax = ref<number>(0)
 const totalDiscountPercentage = computed<number>(() => (((totalDiscount.value) / Number(subTotal.value)) * 100))
-const total = computed<number>(() => ((subTotal.value || 0) - (totalDiscount.value || 0)))
+const total = computed<number>(() => ((subTotal.value || 0) - (totalDiscount.value || 0) + (tax.value || 0)))
 const amountPaid = ref<number>(0)
 const amountDue = computed<number>(() => amountPaid.value >= 0 ? ((total.value || 0) - (amountPaid.value || 0)) : 0)
 
@@ -423,6 +426,8 @@ const save = async () => {
         itemId: i.item.id,
         price: i.price,
         quantity: i.quantity,
+        discount: i.discount,
+        tax: i.tax,
         amount: i.amount,
         accountId: i.accountId,
       })
@@ -439,6 +444,8 @@ const save = async () => {
     userId: user.value?.id,
     date: invoiceDate.value,
     payments: undefined,
+    discount: totalDiscount.value,
+    tax: tax.value,
     invoiceLines: invoiceLines,
   }
 

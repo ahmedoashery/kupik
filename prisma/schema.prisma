@@ -32,7 +32,7 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @db.Text @map("session_token")
+  sessionToken String   @map("session_token") @db.Text
   userId       String   @map("user_id")
   startedAt    DateTime @map("started_at")
   expires      DateTime
@@ -51,7 +51,7 @@ model User {
   address       String?
   city          String?
   zipcode       String?
-  name          String?    @unique
+  name          String?   @unique
   email         String?   @unique
   password      String?   @db.Text
   emailVerified DateTime? @map("email_verified")
@@ -61,7 +61,7 @@ model User {
   invoices      Invoice[]
   bills         Bill[]
 
-  @@unique(fields: [firstname, lastname], name:"fullname")
+  @@unique(fields: [firstname, lastname], name: "fullname")
   @@map("users")
 }
 
@@ -267,6 +267,8 @@ model Invoice {
   accountId    Int?             @map("account_id")
   userId       String?          @map("user_id")
   date         DateTime?        @default(now())
+  discount     Decimal?
+  tax          Decimal?
   payments     InvoicePayment[]
   invoiceLines InvoiceLine[]
   entity       Entity?          @relation(fields: [entityId], references: [id], onUpdate: Cascade, onDelete: NoAction)
@@ -285,6 +287,8 @@ model InvoiceLine {
   itemId    Int?            @map("item_id")
   quantity  Decimal?        @db.Decimal(10, 0)
   price     Decimal?        @db.Decimal(10, 0)
+  discount  Decimal?
+  tax       Decimal?
   amount    Decimal?        @db.Decimal(10, 0)
   invoice   Invoice?        @relation(fields: [invoiceId], references: [id], onUpdate: Cascade, onDelete: NoAction)
   item      Item?           @relation(fields: [itemId], references: [id], onUpdate: Cascade, onDelete: NoAction)

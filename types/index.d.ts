@@ -84,6 +84,8 @@ export interface Invoice {
   accountId?: number | null;
   userId?: string | null;
   date: string | null;
+  discount?: number|undefined;
+  tax?: number|undefined;
   payments?: InvoicePayment[];
   invoiceLines: InvoiceLine[];
   entity: Entity;
@@ -98,6 +100,8 @@ export interface InvoiceLine {
   itemId?: number;
   quantity?: number|undefined;
   price?: number|undefined;
+  discount?: number|undefined;
+  tax?: number|undefined;
   amount?: number;
   invoice?: Invoice;
   item?: Item;

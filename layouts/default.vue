@@ -85,7 +85,14 @@ const links = [{
     text: 'اعدادات النظام',
     shortcuts: ['G', 'S']
   }
-}]
+},
+{
+  id:'reports',
+  label: 'مركز التقارير',
+  to:'/reports',
+  icon:'i-heroicons-table-cells'
+}
+]
 
 const footerLinks = [{
   label: 'شرح البرنامج',
