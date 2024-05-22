@@ -26,7 +26,13 @@
               icon="i-heroicons-printer-solid"
               :disabled="total <= 0 || !selectedCustomer"
             />
-            <UButton label="الغاء" color="white" variant="solid" icon="i-heroicons-receipt-refund-solid" @click="cancel" />
+            <UButton
+              label="الغاء"
+              color="white"
+              variant="solid"
+              icon="i-heroicons-receipt-refund-solid"
+              @click="cancel"
+            />
           </UButtonGroup>
           <UPagination
             v-model="page"
@@ -154,10 +160,28 @@
               @change="row.price === 0 ? (row.price = 1) : row.price"
             />
           </template>
+          <template #discount-data="{ row }">
+            <UInput
+              v-model.number="row.discount"
+              type="number"
+              variant="none"
+              :min="1"
+              @change="row.discount === 0 ? (row.discount = 1) : row.discount"
+            />
+          </template>
+          <template #tax-data="{ row }">
+            <UInput
+              v-model.number="row.tax"
+              type="number"
+              variant="none"
+              :min="1"
+              @change="row.tax === 0 ? (row.tax = 1) : row.tax"
+            />
+          </template>
 
           <template #amount-data="{ row }">
-            <span v-if="row.quantity && row.price" clss="text-center">{{ Number(row.quantity *
-              row.price).toLocaleString() }}</span>
+            <span v-if="row.quantity && row.price" clss="text-center">{{ (Number(row.quantity * row.price) +
+              Number(row.tax||0) - Number(row.discount||0)).toLocaleString() }}</span>
           </template>
           <template #actions-data="{ row, index }">
             <UButton
@@ -184,7 +208,7 @@
             <div>
               الاجمالى الفرعى = {{ Number(subTotal).toLocaleString('ar-EG', {
                 style: 'currency', currency: 'EGP',
-                maximumFractionDigits: 2, useGrouping: true, compactDisplay: 'short'
+                maximumFractionDigits: 0, useGrouping: true, compactDisplay: 'short'
               }) }}
             </div>
             <div>
@@ -193,7 +217,7 @@
             <div>
               الاجمالى = {{ total.toLocaleString('ar-EG', {
                 style: 'currency', currency: 'EGP',
-                maximumFractionDigits: 2,
+                maximumFractionDigits: 0,
                 useGrouping: true, compactDisplay: 'short'
               }) }}
             </div>
@@ -231,19 +255,27 @@
                 @change="recalculate"
               />
             </UFormGroup>
+
             <UFormGroup
               label="الباقى ="
               class="w-auto"
               :ui="{ inner: 'bg-red', wrapper: 'flex', label: { wrapper: 'w-20 h-full' } }"
             >
-              <UInput
-                v-model.number="amountDue"
+              <span
+                class="relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-md placeholder-gray-400 dark:placeholder-gray-500 text-sm px-2.5 py-1.5 shadow-sm bg-transparent text-gray-900 dark:text-white ring-1 ring-inset ring-primary-500 dark:ring-primary-400 focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+              >{{
+                amountDue.toLocaleString('ar-EG', {
+                  style: 'currency', currency: 'EGP',
+                  maximumFractionDigits: 0, useGrouping: true, compactDisplay: 'short'
+                }) }}</span>
+              <!-- <UInput
+                v-model="amountDue"
                 type="number"
                 min="0.0"
                 color="primary"
                 variant="outline"
                 disabled
-              />
+              /> -->
             </UFormGroup>
           </div>
         </div>
@@ -304,7 +336,7 @@ const customers = ref()
 const selectedCustomer = ref()
 const searchCustomerQuery = ref('')
 
-const invoiceItems = ref<InvoiceLine[]>(Array.from({ length: 50 }).map(() => ({} as any)))
+const invoiceItems = ref<InvoiceLine[]>(Array.from({ length: 50 }).map(() => ({} as InvoiceLine)))
 
 // watch for pagination
 watch(page, (newPage) => {
@@ -313,6 +345,7 @@ watch(page, (newPage) => {
   user.value = invoice.value ? invoice.value?.user : loggedInUser.value
   invoiceNum.value = invoice.value ? invoice.value?.num! : maxNum.value
   invoiceItems.value = invoice.value ? invoice.value.invoiceLines : invoiceItems.value
+  Array.from({ length: 50 }).map(() => invoice.value?.invoiceLines.push({} as InvoiceLine))
 })
 
 const initNewInvoice = async () => {
@@ -327,6 +360,8 @@ const initNewInvoice = async () => {
     num: maxNum.value,
     type: 'invoice',
     date: invoiceDate.value,
+    discount: totalDiscount.value,
+    tax: tax.value,
     payments: [],
     invoiceLines: invoiceItems.value,
     entity: selectedCustomer.value,
@@ -348,14 +383,14 @@ const invoiceItemsColumns = ref([
 
 
 // calculate
-const count = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + (Number(line.quantity) || 0), 0))
-const subTotal = computed<number|undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0)), 0))
+const count = computed<number | undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + (Number(line.quantity) || 0), 0))
+const subTotal = computed<number | undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0)), 0))
 const totalDiscount = ref<number>(0)
 const tax = ref<number>(0)
 const totalDiscountPercentage = computed<number>(() => (((totalDiscount.value) / Number(subTotal.value)) * 100))
 const total = computed<number>(() => ((subTotal.value || 0) - (totalDiscount.value || 0) + (tax.value || 0)))
 const amountPaid = ref<number>(0)
-const amountDue = computed<number>(() => amountPaid.value >= 0 ? ((total.value || 0) - (amountPaid.value || 0)) : 0)
+const amountDue = computed<number>(() => amountPaid.value >= 0 ? (Number(total.value || 0) - Number(amountPaid.value || 0)) : 0)
 
 const removeItem = (index: number, length?: number) => {
   if (index !== -1) {
@@ -383,7 +418,7 @@ const searchItem = async (q: string = '') => {
   return items
 }
 
-const updateInvoiceItemsLines = (row: any, index: number) => {
+const updateInvoiceItemsLines = (row: InvoiceLine, index: number) => {
   if (!row.item) {
     removeItem(index)
     return
@@ -391,14 +426,14 @@ const updateInvoiceItemsLines = (row: any, index: number) => {
   const exists = invoiceItems.value.findIndex(i => i.item?.id! == row?.item?.id!)
   const line = invoiceItems.value[exists]
   if (exists !== index) {
-    line.quantity! += 1
+    line.quantity! = Number(line.quantity) + 1
     removeItem(index)
   }
   else {
     line.quantity = 1
     line.price = Number(row.item.price)
   }
-  line.amount = Number(line.price) * Number(line.quantity)
+  line.amount = Number(line.price) * Number(line.quantity) + Number(line.tax) - Number(line.discount)
   const lastIndex = invoiceItems.value.findLastIndex((item) => !isEmpty(item))
   const prevEmptyLines = invoiceItems.value.filter(i => isEmpty(i) && invoiceItems.value.indexOf(i) < lastIndex)
   removeItem(invoiceItems.value.indexOf(prevEmptyLines[0]), prevEmptyLines.length)
@@ -419,17 +454,17 @@ const toast = useToast()
 
 // save invoice in db
 const save = async () => {
-  const invoiceLines: any[] = []
+  const invoiceLines: InvoiceLine[] = []
   invoiceItems.value.map((i) => {
     if (i.item !== undefined) {
       invoiceLines.push({
-        itemId: i.item.id,
-        price: i.price,
-        quantity: i.quantity,
-        discount: i.discount,
-        tax: i.tax,
-        amount: i.amount,
-        accountId: i.accountId,
+        itemId: Number(i.item.id),
+        price: Number(i.price),
+        quantity: Number(i.quantity),
+        discount: i.discount || null||undefined,
+        tax: i.tax || null||undefined,
+        amount: (Number(i.quantity) * Number(i.price)) - Number(i.discount||0) + Number(i.tax||0),
+        accountId: i.accountId || null||undefined,
       })
     }
 
@@ -463,18 +498,18 @@ const save = async () => {
         color: 'green',
       })
     }
-  }).catch((error) => {console.error(error)})
-    .finally(async() => {
+  }).catch((error) => { console.error(error) })
+    .finally(async () => {
       await refreshInvoiceNum()
       // refresh invoices
       await refreshInvoices()
       // init new invoice
       await initNewInvoice()
-  })
+    })
 }
 
 // cancel
-const cancel = async() => {
+const cancel = async () => {
   // refresh invoices
   await refreshInvoices()
   // init new invoice
@@ -486,7 +521,7 @@ const cancel = async() => {
 }
 
 // init new invoice -- on mounted
-onMounted(async() => {
+onMounted(async () => {
   await initNewInvoice()
 })
 </script>

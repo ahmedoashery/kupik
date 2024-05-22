@@ -665,6 +665,11 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.1.tgz#16308cea045f0fc777b6ff20a9f25474dd8293d2"
   integrity sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==
 
+"@grapecity/activereports-localization@^4.2.2":
+  version "4.2.2"
+  resolved "https://registry.yarnpkg.com/@grapecity/activereports-localization/-/activereports-localization-4.2.2.tgz#5cb4f8e4c4deb42fa9d2ece64b80736bb38f911b"
+  integrity sha512-5xqbnIQwIDjUizG8+wkz2kA73x9UfBDL5hkH6VE79nnbZXwcq/uwHSJv5NR2HI5MIYeoGFvolPpHPm3EJ9G+Gg==
+
 "@grapecity/activereports-vue@^4.2.2":
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/@grapecity/activereports-vue/-/activereports-vue-4.2.2.tgz#df7123f08120edfc175420199392fec2f83197e5"

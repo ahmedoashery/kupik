@@ -23,6 +23,7 @@ export default eventHandler(async (event) => {
     // payments: valid.data.payments,
     userId: valid.data.userId,
     discount: valid.data.discount,
+    tax: valid.data.discount,
     invoiceLines: {
       createMany: {
         data: valid.data.invoiceLines
@@ -46,12 +47,14 @@ export default eventHandler(async (event) => {
         date: valid.data.date,
         type: valid.data.type,
         userId: valid.data.userId,
-        invoiceLines:{
-          updateMany:{
-            where: {},
+        discount: valid.data.discount,
+        tax: valid.data.tax,
+        invoiceLines: {
+          deleteMany:{},
+          createMany:{
             data: valid.data.invoiceLines
           }
-        }
+        },
       },
       include: {invoiceLines: true}
     })

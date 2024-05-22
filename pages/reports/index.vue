@@ -1,5 +1,9 @@
 <template>
-  <h3>مركز التقارير</h3>
+  <div>
+    <UDashboardPage>
+      <ReportViewer />
+    </UDashboardPage>
+  </div>
 </template>
 
 <script setup lang='ts'>

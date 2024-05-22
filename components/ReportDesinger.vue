@@ -1,19 +1,18 @@
 <template>
   <div id="designer-host">
     <LazyClientOnly>
-      <Designer :report="{id: 'reports/customers-list.rdlx-json', displayName: 'Customers-List Report' }" />
+      <Designer :report="report" :language="lang" />
     </LazyClientOnly>
   </div>
 </template>
 
-  <script lang="ts">
+  <script setup lang="ts">
 import {Designer} from '@grapecity/activereports-vue'
 
-  export default{
-    name: 'DesignerPage',
-    components: {
-      Designer,
-  }}
+const props = defineProps({
+  report: {type: Object, default: null, required: true},
+  lang: {type: String, default: 'ar'}
+})
   </script>
 
   <style
@@ -25,7 +24,7 @@ import {Designer} from '@grapecity/activereports-vue'
 
   <style scoped>
   #designer-host {
-    height: 100vh;
+    height: 100%;
     width: 100%;
   }
   </style>

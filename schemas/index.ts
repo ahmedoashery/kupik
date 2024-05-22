@@ -52,8 +52,8 @@ export const InvoiceLineSchema = object({
   itemId: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
   quantity: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
   price: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
-  discount: z.number().nullable(),
-  tax: z.number().nullable(),
+  discount: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
+  tax: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
   amount: z.union([z.string(), z.number(), z.undefined(), z.nullable(z.number())]),
 })
 

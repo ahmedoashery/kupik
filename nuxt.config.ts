@@ -65,9 +65,9 @@ export default defineNuxtConfig({
     }
   },
   vite: {
-    ssr:{
-      external: true
-    },
+    // ssr:{
+    //   external: true
+    // },
     resolve: {
       alias: [
         {
@@ -97,5 +97,5 @@ export default defineNuxtConfig({
         },
       ],
     },
-  }
+  },
 })
