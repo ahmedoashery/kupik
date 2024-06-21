@@ -21,7 +21,7 @@ const period = ref<Period>('daily')
 </script>
 
 <template>
-  <div>
+  <div class="w-full">
     <UDashboardPage>
       <UDashboardPanel grow>
         <UDashboardNavbar title="Home">

@@ -1,3 +1,4 @@
+import type { InvoiceLine, InvoicePayment } from '@prisma/client'
 import { db } from '~/prisma/db'
 import { InvoiceSchema, InvoicePaymentSchema, InvoiceLineSchema } from '~/schemas'
 
@@ -20,7 +21,11 @@ export default eventHandler(async (event) => {
     date: valid.data.date,
     entityId: valid.data.entityId,
     accountId: valid.data.accountId,
-    // payments: valid.data.payments,
+    payments: {
+      createMany:{
+        data: valid.data.payments
+      }
+    },
     userId: valid.data.userId,
     discount: valid.data.discount,
     tax: valid.data.discount,
@@ -49,10 +54,15 @@ export default eventHandler(async (event) => {
         userId: valid.data.userId,
         discount: valid.data.discount,
         tax: valid.data.tax,
+        payments: {
+          createMany:{
+            data: valid.data.payments as any[]
+          }
+        },
         invoiceLines: {
           deleteMany:{},
           createMany:{
-            data: valid.data.invoiceLines
+            data: valid.data.invoiceLines as InvoiceLine[]
           }
         },
       },

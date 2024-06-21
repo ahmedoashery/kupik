@@ -315,7 +315,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from '@unovis/ts'
-import type { Invoice, InvoiceLine } from '~/types'
+import type { Invoice, InvoiceLine, InvoicePayment } from '~/types'
 
 const { data: invoices, refresh: refreshInvoices } = await useFetch<Invoice[]>('/api/transactions/invoices')
 const invoice = ref<Invoice>()
@@ -345,6 +345,10 @@ watch(page, (newPage) => {
   user.value = invoice.value ? invoice.value?.user : loggedInUser.value
   invoiceNum.value = invoice.value ? invoice.value?.num! : maxNum.value
   invoiceItems.value = invoice.value ? invoice.value.invoiceLines : invoiceItems.value
+  totalDiscount.value = invoice.value ? invoice.value.discount : totalDiscount.value
+  tax.value = invoice.value ? invoice.value.tax : tax.value
+  amountPaid.value = invoice.value ? invoice.value.payments?.reduce((n: number, line: any) => n + (Number(line.amount) || 0), 0) : amountPaid.value
+
   Array.from({ length: 50 }).map(() => invoice.value?.invoiceLines.push({} as InvoiceLine))
 })
 
@@ -384,13 +388,13 @@ const invoiceItemsColumns = ref([
 
 // calculate
 const count = computed<number | undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + (Number(line.quantity) || 0), 0))
-const subTotal = computed<number | undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0)), 0))
-const totalDiscount = ref<number>(0)
-const tax = ref<number>(0)
-const totalDiscountPercentage = computed<number>(() => (((totalDiscount.value) / Number(subTotal.value)) * 100))
-const total = computed<number>(() => ((subTotal.value || 0) - (totalDiscount.value || 0) + (tax.value || 0)))
-const amountPaid = ref<number>(0)
-const amountDue = computed<number>(() => amountPaid.value >= 0 ? (Number(total.value || 0) - Number(amountPaid.value || 0)) : 0)
+const subTotal = computed<number | undefined>(() => invoice.value?.invoiceLines.reduce((n: number, line: any) => n + ((Number(line.quantity) || 0) * (Number(line.price) || 0) - Number(line.discount || 0) + Number(line.tax || 0)), 0))
+const totalDiscount = ref<number | undefined>(0)
+const tax = ref<number | undefined>(0)
+const totalDiscountPercentage = computed<number>(() => (((totalDiscount.value||0) / Number(subTotal.value)) * 100))
+const total = computed<number>(() => ((Number(subTotal.value) || 0) - (Number(totalDiscount.value) || 0) + (Number(tax.value) || 0)))
+const amountPaid = ref<number|undefined>(0)
+const amountDue = computed<number>(() => amountPaid.value||0 >= 0 ? (Number(total.value || 0) - Number(amountPaid.value || 0)) : 0)
 
 const removeItem = (index: number, length?: number) => {
   if (index !== -1) {
@@ -442,11 +446,11 @@ const updateInvoiceItemsLines = (row: InvoiceLine, index: number) => {
 }
 
 // Recalculate
-const recalculate = () => {
-  totalDiscount.value = totalDiscount.value > Number(subTotal.value) ? Number(subTotal.value) : totalDiscount.value
-  totalDiscount.value = totalDiscount.value < 0 ? 0 : totalDiscount.value
-  amountPaid.value = amountPaid.value > total.value ? total.value : amountPaid.value
-  amountPaid.value = amountPaid.value < 0 ? 0 : amountPaid.value
+const recalculate = async () => {
+  totalDiscount.value = totalDiscount.value! > Number(subTotal.value) ? Number(subTotal.value) : totalDiscount.value
+  totalDiscount.value = totalDiscount.value! < 0 ? 0 : totalDiscount.value
+  amountPaid.value = amountPaid.value||0 > total.value ? total.value : amountPaid.value
+  amountPaid.value = amountPaid.value||0 < 0 ? 0 : amountPaid.value
 }
 
 // notification toast
@@ -470,21 +474,26 @@ const save = async () => {
 
   })
 
+  const payments:InvoicePayment[] = []
+  payments.push({
+    date: invoiceDate.value,
+    memo: '',
+    amount: amountPaid.value||0
+  })
+
   const data: any = {
     id: invoice.value?.id,
-    num: invoice.value?.num,
     type: 'invoice',
+    date: invoiceDate.value,
+    num: invoice.value?.num,
     entityId: selectedCustomer.value?.id,
     accountId: undefined,
     userId: user.value?.id,
-    date: invoiceDate.value,
-    payments: undefined,
-    discount: totalDiscount.value,
-    tax: tax.value,
+    payments: payments,
+    discount: Number(totalDiscount.value),
+    tax: Number(tax.value),
     invoiceLines: invoiceLines,
   }
-
-  console.log('INVOICE: ', invoice.value, '\nDATA: ', data)
 
   await $fetch('/api/transactions/invoice', {
     method: 'POST',
@@ -500,6 +509,9 @@ const save = async () => {
     }
   }).catch((error) => { console.error(error) })
     .finally(async () => {
+      // recalculate
+      await recalculate()
+      // refresh invoice num
       await refreshInvoiceNum()
       // refresh invoices
       await refreshInvoices()

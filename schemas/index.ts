@@ -41,7 +41,7 @@ export const AuthSchema = object({
 export const InvoicePaymentSchema = object({
   invoiceId: number().optional(),
   accountId: number().optional(),
-  date: date(),
+  date: string(),
   memo: string(),
   amount: number(),
 })
@@ -65,7 +65,7 @@ export const InvoiceSchema = object({
   accountId: number().optional(),
   userId: string().optional(),
   date: string(),
-  payments: z.array(InvoicePaymentSchema).optional(),
+  payments: z.array(InvoicePaymentSchema).optional().nullable(),
   discount: z.number().nullable(),
   tax: z.number().nullable(),
   invoiceLines: z.array(InvoiceLineSchema).min(1, {message: 'يجب اضافة اصناف/خدمات للفاتورة!'})

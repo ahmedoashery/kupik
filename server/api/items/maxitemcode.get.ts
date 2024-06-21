@@ -6,5 +6,5 @@ export default eventHandler(async () => {
     _max: {id: true}
   })
   const code = faker.number.int({min: 10000})
-  return `${item._max.id}${code}`
+  return `${item._max.id||''}${code}`
 })

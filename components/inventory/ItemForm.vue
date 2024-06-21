@@ -15,7 +15,7 @@ const state = reactive<Item>({ ...props.item })
 const initialData = props.item
 
 // Categories data
-const { data: categories, refresh:refreshCategories } = await useFetch<any>('/api/items/categories')
+const { data: categories, refresh: refreshCategories } = await useFetch<any>('/api/items/categories')
 state.category = props.item.id ? props.item.category || undefined : categories.value[0]
 
 // Inventories data
@@ -124,10 +124,12 @@ const invetoriesList = computed({
     if (index !== -1) {
       state.inventory = inventory
     } else {
-
+      // check if no inventories exist in db
+      if(state.inventory === undefined || !inventory['name']) inventory = {name: inventory}
       // make an API call to create the inventory
-      const newInventory = await $fetch('/api/items/inventory-add', { method: 'POST', body: inventory }).catch((error) => {
-        console.log(error.data)
+      const newInventory = await $fetch('/api/items/inventory-add', { method: 'POST', body: inventory })
+      .catch((error) => {
+        alert('خطأ فى اضافة مخزن جديد ...!\n' + error.data.message)
       })
       refreshInventories()
       state.inventory = newInventory
@@ -141,9 +143,12 @@ const categoriesList = computed({
     if (index !== -1) {
       state.category = category
     } else {
-
+      // check if no inventories exist in db
+      if(state.inventory === undefined || !category['name']) category = {name: category}
       // make an API call to create the inventory
-      const newCategory = await $fetch('/api/items/category-add', { method: 'POST', body: category }).catch((error) => {
+      const newCategory = await $fetch('/api/items/category-add', { method: 'POST', body: category })
+      .catch((error) => {
+          alert('خطأ فى اضافة تصنيف جديد ...!\n' + error.data.message)
         console.log(error.data)
       })
       refreshCategories()

@@ -3,6 +3,7 @@ import { InventorySchema } from '~/schemas'
 
 export default eventHandler(async (event) => {
   const valid = await readValidatedBody(event, (body) => InventorySchema.safeParse(body))
+
   if (!valid.success) {
     throw createError({
       data: valid.error.issues

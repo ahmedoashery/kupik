@@ -326,7 +326,7 @@ const resetFilters = () => {
             <UIcon name="i-heroicons-circle-stack" />
             <h5>لا توجد بيانات</h5>
             <UDivider />
-            <UButton v-show="items.total === 0" label="اضافة جديد" icon="i-heroicons-plus-circle" />
+            <UButton v-show="items.total === 0" label="اضافة جديد" icon="i-heroicons-plus-circle" @click="isItemModalOpen = true; selectedItems = []" />
           </div>
         </template>
       </UTable>
