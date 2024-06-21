@@ -62,34 +62,36 @@
       <UDashboardToolbar class="bg-white dark:bg-gray-600">
         <template #left>
           <div class="flex justify-between">
-            <!-- customer -->
-            <UFormGroup label="العميل:">
-              <UInputMenu
-                ref="customersDropdown"
-                v-model="selectedCustomer"
-                v-model:query="searchCustomerQuery"
-                :search="searchCustomer"
-                :loading="loadingCustomers"
-                placeholder="اختيار عميل..."
-                :popper="{ placement: 'bottom-start' }"
-                by="id"
-                option-attribute="fullname"
-                trailing
-              >
-                <template #option-empty="{ query }">
-                  <span>لم يتم العثور على "{{ query }}"</span>
-                  <UButton label="اضافة" variant="link" color="primary" />
-                </template>
-                <template #empty>
-                  <span>لا توجد بيانات !</span>
-                </template>
-              </UInputMenu>
-            </UFormGroup>
+            <div class="flex justify-between">
+              <!-- customer -->
+              <UFormGroup label="العميل:">
+                <UInputMenu
+                  ref="customersDropdown"
+                  v-model="selectedCustomer"
+                  v-model:query="searchCustomerQuery"
+                  :search="searchCustomer"
+                  :loading="loadingCustomers"
+                  placeholder="اختيار عميل..."
+                  :popper="{ placement: 'bottom-start' }"
+                  by="id"
+                  option-attribute="fullname"
+                  trailing
+                >
+                  <template #option-empty="{ query }">
+                    <span>لم يتم العثور على "{{ query }}"</span>
+                    <UButton label="اضافة" variant="link" color="primary" />
+                  </template>
+                  <template #empty>
+                    <span>لا توجد بيانات !</span>
+                  </template>
+                </UInputMenu>
+              </UFormGroup>
 
-            <!-- invoice num -->
-            <ClientOnly>
-              <span v-if="invoiceNum" class="align-middle my-3 ms-20">#{{ invoiceNum }}</span>
-            </ClientOnly>
+              <!-- invoice num -->
+              <ClientOnly>
+                <span v-if="invoiceNum" class="align-middle my-3 ms-20">#{{ invoiceNum }}</span>
+              </ClientOnly>
+            </div>
           </div>
         </template>
         <template #right>
@@ -294,7 +296,8 @@
       class="bg-gray-100 dark:bg-gray-800"
     >
       <UDashboardNavbar title="تاريخ العمليات للعميل">
-        <template #right>
+        <UDashboardNavbar title="تاريخ العمليات للعميل">
+          <template #right>
           <!-- <UButton
             variant="outline"
             label="تحديث"
@@ -303,12 +306,13 @@
             :loading="pending"
             @click="refreshItems"
           /> -->
-        </template>
-      </UDashboardNavbar>
-      <UDashboardToolbar />
-      <UDashboardPanelContent>
+          </template>
+        </UDashboardNavbar>
+        <UDashboardToolbar />
+        <UDashboardPanelContent>
         <!-- tabs -->
-      </UDashboardPanelContent>
+        </UDashboardPanelContent>
+      </udashboardnavbar>
     </UDashboardPanel>
   </UDashboardPage>
 </template>
@@ -441,6 +445,8 @@ const updateInvoiceItemsLines = (row: InvoiceLine, index: number) => {
   const lastIndex = invoiceItems.value.findLastIndex((item) => !isEmpty(item))
   const prevEmptyLines = invoiceItems.value.filter(i => isEmpty(i) && invoiceItems.value.indexOf(i) < lastIndex)
   removeItem(invoiceItems.value.indexOf(prevEmptyLines[0]), prevEmptyLines.length)
+  if (invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as any)
+  )
   if (invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as any)
   )
 }

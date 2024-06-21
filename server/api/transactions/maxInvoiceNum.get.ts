@@ -12,3 +12,4 @@ export default eventHandler(async () => {
   const max = maxInvoiceId._max.id
   return (max! + 1) || 1
 })
+
