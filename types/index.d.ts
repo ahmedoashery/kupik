@@ -1,5 +1,6 @@
 import type { Avatar } from '#ui/types'
 import type { BillPayment, InvoicePayment } from '@prisma/client'
+import type { BillPayment, InvoicePayment } from '@prisma/client'
 
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 
