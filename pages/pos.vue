@@ -62,9 +62,11 @@
       <UDashboardToolbar class="bg-white dark:bg-gray-600">
         <template #left>
           <div class="flex justify-between">
+          <div class="flex justify-between">
             <!-- customer -->
             <UFormGroup label="العميل:">
               <UInputMenu
+                ref="customersDropdown"
                 ref="customersDropdown"
                 v-model="selectedCustomer"
                 v-model:query="searchCustomerQuery"
@@ -108,6 +110,7 @@
         <!-- <div class="grid justify-between h-full w-full p-3"> -->
         <UTable
           ref="itemsTable"
+          :rows="invoice?.invoiceLines!"
           :rows="invoice?.invoiceLines!"
           :columns="invoiceItemsColumns"
           class="bg-white w-full dark:bg-gray-900 h-96"
@@ -294,6 +297,7 @@
       class="bg-gray-100 dark:bg-gray-800"
     >
       <UDashboardNavbar title="تاريخ العمليات للعميل">
+      <UDashboardNavbar title="تاريخ العمليات للعميل">
         <template #right>
           <!-- <UButton
             variant="outline"
@@ -326,11 +330,14 @@ const invoiceNum = ref()
 const invoiceDate = ref(new Date())
 const { data: loggedInUser } = useAuth()
 const user = ref(loggedInUser.value)
+const { data: loggedInUser } = useAuth()
+const user = ref(loggedInUser.value)
 
 const itemsList = ref()
 const itemsTable = ref()
 const isItemsPanelOpen = ref(false)
 
+const customersDropdown = ref()
 const customersDropdown = ref()
 const customers = ref()
 const selectedCustomer = ref()
@@ -441,6 +448,8 @@ const updateInvoiceItemsLines = (row: InvoiceLine, index: number) => {
   const lastIndex = invoiceItems.value.findLastIndex((item) => !isEmpty(item))
   const prevEmptyLines = invoiceItems.value.filter(i => isEmpty(i) && invoiceItems.value.indexOf(i) < lastIndex)
   removeItem(invoiceItems.value.indexOf(prevEmptyLines[0]), prevEmptyLines.length)
+  if (invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as any)
+  )
   if (invoiceItems.value.filter((i) => isEmpty(i)).length <= 1) Array.from({ length: 5 }).map(() => invoiceItems.value.push({} as any)
   )
 }

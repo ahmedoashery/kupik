@@ -1,4 +1,5 @@
 import { db } from '~/prisma/db'
+import { db } from '~/prisma/db'
 
 export default eventHandler(async () => {
   const maxInvoiceId = await db.invoice.aggregate({
@@ -12,3 +13,4 @@ export default eventHandler(async () => {
   const max = maxInvoiceId._max.id
   return (max! + 1) || 1
 })
+

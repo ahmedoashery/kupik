@@ -1,6 +1,8 @@
 import { z, date, number, object, string } from 'zod'
+import { z, date, number, object, string } from 'zod'
 
 export const UserSchema = object({
+  firstname: z.string({ required_error: 'يجب ادخال الاسم الاول' })
   firstname: z.string({ required_error: 'يجب ادخال الاسم الاول' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200 !'),
@@ -10,9 +12,11 @@ export const UserSchema = object({
   name: string().optional(),
 
   email: string({ required_error: 'يجب ادخال بريد الكترونى' })
+  email: string({ required_error: 'يجب ادخال بريد الكترونى' })
     .email('بريد الكترونى غيرصحيح!')
     .email('يجب ادخال بريد الكترونى صحيح'),
 
+  password: string({ required_error: 'يجب ادخال كلمة المرور' })
   password: string({ required_error: 'يجب ادخال كلمة المرور' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
@@ -29,9 +33,11 @@ export const UserSchema = object({
 
 export const AuthSchema = object({
   username: string({ required_error: 'يجب ادخال اسم المستخدم' })
+  username: string({ required_error: 'يجب ادخال اسم المستخدم' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
 
+  password: string({ required_error: 'يجب ادخال كلمة المرور' })
   password: string({ required_error: 'يجب ادخال كلمة المرور' })
     .min(4, ' الحد الادنى 4 احرف')
     .max(200, 'الحد الاقصى 200'),
@@ -79,8 +85,12 @@ export const ItemSchema = z.object({
   inventory: z.object({
     id: z.number(),
     name: z.string().trim()
+    id: z.number(),
+    name: z.string().trim()
   }, { required_error: 'يجب تحديد مخزن' }),
   category: z.object({
+    id: z.number(),
+    name: z.string().trim()
     id: z.number(),
     name: z.string().trim()
   }, { required_error: 'يجب تحديد تصنيف/مجموعة' }),

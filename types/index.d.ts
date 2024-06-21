@@ -1,9 +1,11 @@
 import type { Avatar } from '#ui/types'
 import type { BillPayment, InvoicePayment } from '@prisma/client'
+import type { BillPayment, InvoicePayment } from '@prisma/client'
 
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 
 export interface User {
+  id: string
   id: string
   name: string
   email: string
@@ -46,6 +48,22 @@ export interface Range {
 
 export interface Entity {
   id: number;
+  avatar?: string | null;
+  groupId?: number | null;
+  group?: Group | null;
+  code?: string | null;
+  accountNumber?: string | null;
+  firstname: string | null;
+  lastname?: string | null;
+  fullname?: string | null;
+  contact?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  address?: string | null;
+  city?: string | null;
+  zipcode?: string | null;
+  startedAt?: DateTime | null;
+  isActive?: boolean | null;
   avatar?: string | null;
   groupId?: number | null;
   group?: Group | null;
